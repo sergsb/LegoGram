@@ -1,2 +1,2 @@
-# legoMol
-LegoMol:  optimized molecular grammars for new molecules discovery
+# legoGram
+LegoGram:  optimized molecular grammars for new molecules discovery
