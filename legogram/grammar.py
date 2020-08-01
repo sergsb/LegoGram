@@ -1,13 +1,17 @@
 from rdkit import Chem
+from rdkit import RDLogger
+lg = RDLogger.logger()
+lg.setLevel(RDLogger.CRITICAL)
+
 import numpy as np
 import matplotlib.pyplot as plt
 import igraph as ig
-
+import pygraphviz as pgv
 
 ###############################################################
 ### utils
 
-def canonize_smile(sm):
+def canonize_smile (sm):
     m = Chem.MolFromSmiles(sm)
     try:
         return Chem.MolToSmiles(m, canonical=True, isomericSmiles=False)
@@ -15,11 +19,11 @@ def canonize_smile(sm):
         return None
 
 
-def bond2rank(bond_type):
+def bond2rank (bond_type):
     return {'S': 0, 'D': 1, 'T': 2, 'A': 3}[str(bond_type)[0]]
 
 
-def rank2bond(bond_rank):
+def rank2bond (bond_rank):
     try:
         return [Chem.BondType.SINGLE,
                 Chem.BondType.DOUBLE,
@@ -29,16 +33,16 @@ def rank2bond(bond_rank):
         return Chem.BondType.UNSPECIFIED
 
 
-def rank2bond_char(bond_rank):
+def rank2bond_char (bond_rank):
     char0 = str(rank2bond(bond_rank))[0]
-    return {'S': '-', 'D': '=', 'T': '#', 'A': '()'}[char0]
+    return {'S': '-', 'D': '=', 'T': '#', 'A': 'A'}[char0]
 
 
-def edge(g, frm, to):  # maybe switch to g.get_eid(frm,to)
+def edge (g, frm, to):  # maybe switch to g.get_eid(frm,to)
     return list(g.es.select(_between=([frm], [to])))[0]
 
 
-def mol2graph(mol):
+def mol2graph (mol):
     G = ig.Graph()
     for i, atom in enumerate(mol.GetAtoms()):
         G.add_vertex(atom.GetSmarts())
@@ -49,7 +53,7 @@ def mol2graph(mol):
     return G
 
 
-def graph2mol(graph):
+def graph2mol (graph):
     emol = Chem.RWMol()
     for v in graph.vs():
         emol.AddAtom(Chem.AtomFromSmiles(v["name"]))
@@ -58,77 +62,96 @@ def graph2mol(graph):
     mol = emol.GetMol()
     return mol
 
-
-def draw(g, out=None):
-    def vcolor(i):
-        v = g.vs[i]
-        if i == 0:
-            return 'rgb(200,127,127)'
-        elif v['name'] == "NT":
-            return 'rgb(200,200,200)'
+def draw (graph, draw=None, with_order=False, neato_seed=None):
+    def is_aromatic_nt (v):
+        if v['name'] == "NT":
+            return 3 in [edge(graph, v.index, n.index)['bond']
+                         for n in v.neighbors()]
         else:
-            return 'rgb(255,255,255)'
-
-    def vname(i):
-        v = g.vs[i]
+            return False
+    
+    def vcolor (v):
+        i = v.index
         if i == 0:
-            if 'income' in v.attribute_names():
-                income_chars = [rank2bond_char(inc) for inc in g.vs[0]['income']]
-                return v['name'] + "\n" + ",".join(income_chars)
-            else:
-                return v['name']  # +"\n"+"({})".format(i)
+            return '#7dff8a'#'#eeaaaa)'
         elif v['name'] == "NT":
-            return "NT\n" + str(v['order'])  # +"\n"+"({})".format(i)
+            return '#ff7c7c'#'#eeeeee'
         else:
-            return v['name']  # +"\n"+"({})".format(i)
-
-    def vname2(i):
-        v = g.vs[i]
+            return '#7da9ff'#'#fafafa'
+    
+    def elabel (e):
+        if 'bond' in e.attribute_names() and e['bond'] > 0:
+            return str(rank2bond(e['bond']))[0]
+        else:
+            return ""
+    
+    def vname2 (v):
+        i = v.index
+        name = v['name']
+        if name == 'c' or name == 'o' or name == 'n' or name == 'p' or name == 's':
+            name = name.upper()+":"
+        if is_aromatic_nt(v):
+            name = "NT:"
         if 'income' in v.attribute_names():
-            income_chars = [rank2bond_char(inc) for inc in v['income']]
+            income_chars = ",".join([rank2bond_char(inc) for inc in v['income']])
         else:
             income_chars = ""
         if i == 0:
-            return v['name'] + "\n" + "({})".format(i) + ",".join(income_chars)
-        elif v['name'] == "NT":
-            return "NT\n" + str(v['order']) + "\n" + "({})".format(i) + ",".join(income_chars)
+            return f"{income_chars}\n{name}"
+        elif name[:2] == "NT":
+            return f"{name} {v['order']}\n({i})"
         else:
-            return v['name'] + "\n" + "({})".format(i) + ",".join(income_chars)
-
-    def ewidth(i):
-        e = g.es[i]
-        if 'bond' in e.attribute_names() and e['bond'] > 0:
-            return 6
+            return f"{name}\n{i}"
+    
+    def vname1 (i):
+        i = v.index
+        name = v['name']
+        if name == 'c' or name == 'o' or name == 'n' or name == 'p' or name == 's':
+            name = name.upper()+":"
+        if is_aromatic_nt(v):
+            name = "NT:"
+        if i == 0:
+            if 'income' in v.attribute_names():
+                income_chars = [rank2bond_char(inc) for inc in v['income']]
+                return f"{','.join(income_chars)}\n{name}"
+            else:
+                return name
+        elif name[:2] == "NT":
+            return f"{name}\n{v['order']}"
         else:
-            return 2
+            return name
+    
+    if with_order:
+        vname = vname2
+    else:
+        vname = vname1
 
-    def elabel(i):
-        e = g.es[i]
-        if 'bond' in e.attribute_names() and e['bond'] > 0:
-            return rank2bond_char(e['bond'])
-        else:
-            return ""
-
-    dim = len(g.vs) * 15 + 225
-    ig.plot(g, "/tmp/out.png" if out is None else out,
-            layout="fruchterman_reingold",
-            bbox=(0, 0, dim, dim),
-            vertex_label=[vname2(i) for i in range(len(g.vs))],
-            vertex_size=50,
-            vertex_label_size=20,
-            vertex_color=[vcolor(i) for i in range(len(g.vs))],
-            edge_width=[ewidth(i) for i in range(len(g.es))],
-            edge_label=[elabel(i) for i in range(len(g.es))],
-            edge_label_size=20,
-            # edge_width=10,
-            margin=60)
-    # if out is None:
-    #    !feh /tmp/out.png
-
+    if neato_seed is None: neato_seed="self"
+    G = pgv.AGraph(overlap="false", start=neato_seed)
+    for v in graph.vs():
+        G.add_node(v.index,
+                   shape="circle", label=vname(v),
+                   fillcolor=vcolor(v), style='filled',
+                   fixedsize=True, width="0,78",
+                   fontname="Times:style=Bold", fontsize=16)
+    
+    for e in graph.es():
+        if e['bond']==0:
+            G.add_edge(e.source, e.target, penwidth=2)
+        elif e['bond']==1:
+            G.add_edge(e.source, e.target, penwidth=2, color="black:invis:black")
+        elif e['bond']==2:
+            G.add_edge(e.source, e.target, penwidth=2, color="black:invis:black:invis:black")
+        elif e['bond']==3:
+            G.add_edge(e.source, e.target, penwidth=2, color="black:grey:black")
+    
+    if draw is not None:
+        G.draw(draw, prog='neato')
+    return G
 
 ################################################################
 
-def ring_info(g):
+def ring_info (g):
     rings = [tuple(sorted(sub)) for sub in g.biconnected_components() if len(sub) > 2]
     ring_dict = {}
     for i, r in enumerate(rings):
@@ -140,7 +163,7 @@ def ring_info(g):
     return rings, ring_dict
 
 
-def _make_ring_rule(g, atom, parents, ring):
+def _make_ring_rule (g, atom, parents, ring):
     rule = g.subgraph(ring)
     for i, v in enumerate(rule.vs):
         v['name'] = "NT"
@@ -152,7 +175,7 @@ def _make_ring_rule(g, atom, parents, ring):
     return rule, [v.index for v in g.vs.select(ring)]
 
 
-def make_ring_rule(g, start_atom, start_parents, ring):
+def make_ring_rule (g, start_atom, start_parents, ring):
     rule, ring_atoms = _make_ring_rule(g, start_atom, start_parents, ring)
     edges_to_go = []
 
@@ -165,7 +188,7 @@ def make_ring_rule(g, start_atom, start_parents, ring):
     return rule, edges_to_go
 
 
-def make_rule(g, atom, parents):
+def make_rule (g, atom, parents):
     # parents - list of vertex ids in original graph 'g'
     rule = ig.Graph()
     income = [edge(g, p, atom)['bond'] for p in parents]  # list of bond type incoming to current atom
@@ -182,10 +205,13 @@ def make_rule(g, atom, parents):
     return rule, next_moves
 
 
-def encode(g):
+def encode (g):
     if type(g) is str:
+        if "." in g:
+            raise Exception("Cannot encode isolated fragments now. Split your smiles manually")
         mol = Chem.MolFromSmiles(g)
-        g = mol2graph(mol)
+    Chem.RemoveStereochemistry(mol)
+    g = mol2graph(mol)
 
     ri = ring_info(g)
     ri_list, ri_dict = ri
@@ -245,20 +271,20 @@ def encode(g):
     return rules
 
 
-def nt_fingerprint(g, nt_id):  # list of edge types for given nt (plus own income if any)
+def nt_fingerprint (g, nt_id):  # list of edge types for given nt (plus own income if any)
     own_income = g.vs[nt_id.index]['income']
     income = g.es[g.incident(nt_id)]['bond']
     return sorted(own_income + income)
 
 
-def check_compat(r1, r2):
+def check_compat (r1, r2):
     nt_list = list(r1.vs.select(name="NT"))
     nt_fps = [nt_fingerprint(r1, nt) for nt in nt_list]
     income = sorted(r2.vs[0]['income'])
     return (income in nt_fps)
 
 
-def combine_rules(r1, r2):
+def combine_rules (r1, r2):
     r1 = r1.copy()
     # income: list of bond types
     # find NT with exactly same bond amount and types, and with lowest order
@@ -305,14 +331,17 @@ def combine_rules(r1, r2):
     return r1
 
 
-def decode(rules):
+def decode (rules, partial=False):
     res = rules[0]
     for rule in rules[1:]:
         res = combine_rules(res, rule)
-    return Chem.MolToSmiles(graph2mol(res))
+    if not partial:
+        return Chem.MolToSmiles(graph2mol(res))
+    else:
+        return res
 
 
-def _test(sm):
+def _test (sm):
     sm = canonize_smile(sm)
     return sm == decode(encode(sm))
 
@@ -325,7 +354,7 @@ DrawingOptions.atomLabelFontSize = 15
 DrawingOptions.useFraction = 0.99
 
 
-def rdraw(mol, path="/tmp/out.png"):
+def rdraw (mol, path="/tmp/out.png"):
     if type(mol) is str:
         mol = Chem.MolFromSmiles(mol)
     Draw.MolToFile(mol, path, size=(500, 300), fitImage=True, includeAtomNumbers=False)
@@ -339,7 +368,7 @@ res = encode(sm)
 
 ################################################################
 
-def rule2descr(rule):
+def rule2descr (rule):
     rule = rule.copy()
     for v in rule.vs:
         if v['name'] == "NT":
@@ -352,7 +381,7 @@ def rule2descr(rule):
     return rule
 
 
-def rule_eq(r1, r2):
+def rule_eq (r1, r2):
     r1d, r2d = rule2descr(r1), rule2descr(r2)
     permutations = r1d.get_isomorphisms_vf2(r2d,
                                             node_compat_fn=node_eq,
@@ -360,7 +389,7 @@ def rule_eq(r1, r2):
     return len(permutations) > 0
 
 
-def node_eq(g1, g2, ni1, ni2):
+def node_eq (g1, g2, ni1, ni2):
     return g1.vs[ni1]['name'] == g2.vs[ni2]['name']
 
 
@@ -368,7 +397,7 @@ def edge_eq(g1, g2, ei1, ei2):
     return g1.es[ei1]['bond'] == g2.es[ei2]['bond']
 
 
-def ring_connectivity(mol):
+def ring_connectivity (mol):
     ssr = Chem.GetSymmSSSR(mol)
     rings = [set(x) for x in ssr]
     n = len(rings)
@@ -382,7 +411,7 @@ def ring_connectivity(mol):
     return adj
 
 
-def ring_compliexity_filter(mol, thr=2):
+def ring_compliexity_filter (mol, thr=2):
     if type(mol) is str:
         mol = Chem.MolFromSmiles(mol)
     adj = ring_connectivity(mol)

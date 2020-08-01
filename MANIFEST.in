@@ -1,0 +1,2 @@
+include legogram/data/*
+include legogram/models/*
