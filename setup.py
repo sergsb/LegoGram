@@ -20,6 +20,11 @@ setuptools.setup(
         "License :: OSI Approved :: MIT License",
         "Operating System :: OS Independent",
     ],
+    install_requires=[
+          'python-igraph',
+          'tqdm',
+          'molvs'
+    ],
     python_requires='>=3.6',
     include_package_data=True,
 )
