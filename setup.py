@@ -23,7 +23,8 @@ setuptools.setup(
     install_requires=[
           'python-igraph',
           'tqdm',
-          'molvs'
+          'molvs',
+          'joblib'
     ],
     python_requires='>=3.6',
     include_package_data=True,
