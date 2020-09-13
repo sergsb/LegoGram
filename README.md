@@ -20,7 +20,19 @@ model = LegoGram(load=pretrained.M_250k)
 mol = 'COC(=O)Cc1csc(NC(=O)Cc2coc3cc(C)ccc23)n1'
 encoded = model.encode(mol)`
 model.decode(encoded) == "COC(=O)Cc1csc(NC(=O)Cc2coc3cc(C)ccc23)n1" #It's a toy example. In production compare by InChI
-True
+>>True
+
+```
+
+
+## Encode with compression
+
+```
+mol = 'COC(=O)Cc1csc(NC(=O)Cc2coc3cc(C)ccc23)n1'
+noncompressed = model.encode(mol)
+compressed    = model.encode(mol,optimize=True)
+print("SMILES len = {}, uncomressed grammar = {}, comressed grammar = {}".format(len(mol),len(noncompressed),len(compressed))
+>> SMILES len = 40, uncomressed grammar = 26, comressed grammar = 14
 
 ```
 
