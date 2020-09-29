@@ -1,12 +1,16 @@
 from legogram.base import *
 import numpy as np 
 
+class SpecialTokens(IntEnum):
+    PAD = 0 #Padding
+    BOS = 1 #Begin of Sequence
+    EOS = 2 #End of Sequence
+      
 class LegoGramRNNSampler():
     def __init__(self, lg, optimize=True):
         self.lg = lg
         self.optimize = optimize
-        self.special_tokens = ['<pad>', '<bos>', '<eos>']
-        self.nspecs = len(self.special_tokens)
+        self.nspecs = len(SpecialTokens)
         self.vocsize = self.lg.vocsize + self.nspecs
 
     def encode(self, smi):
