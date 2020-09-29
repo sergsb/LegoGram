@@ -1,6 +1,7 @@
 from legogram.base import *
 import numpy as np 
-from enum import IntEnum 
+from enum import IntEnum
+from rdkit import Chem
 
 class SpecialTokens(IntEnum):
     PAD = 0 #Padding
@@ -33,6 +34,9 @@ class LegoGramRNNSampler():
         graphs = [None] * batch_size
         finished = [False] * batch_size
         return (graphs, finished)
+    
+    def collect(self, state):
+        return [Chem.MolToSmiles(graph2mol(g.graph)) for g, finished in zip(*state) if finished]
 
     def sample(self, state, logits):
         placeholder_idx = [-3, -2, -1]
