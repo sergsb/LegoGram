@@ -24,7 +24,8 @@ setuptools.setup(
           'python-igraph',
           'tqdm',
           'molvs',
-          'joblib'
+          'joblib',
+          'enums'        
     ],
     python_requires='>=3.6',
     include_package_data=True,
