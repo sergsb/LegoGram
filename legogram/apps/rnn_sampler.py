@@ -1,5 +1,6 @@
 from legogram.base import *
 import numpy as np 
+from enum import IntEnum 
 
 class SpecialTokens(IntEnum):
     PAD = 0 #Padding
