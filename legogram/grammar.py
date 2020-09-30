@@ -209,7 +209,7 @@ def encode (g):
     if type(g) is str:
         if "." in g:
             raise Exception("Cannot encode isolated fragments now. Split your smiles manually")
-        mol = Chem.MolFromSmiles(g)
+        mol = Chem.MolFromSmiles(g,sanitize=False)
     Chem.RemoveStereochemistry(mol)
     g = mol2graph(mol)
 
