@@ -4,7 +4,6 @@ lg = RDLogger.logger()
 lg.setLevel(RDLogger.CRITICAL)
 
 import numpy as np
-import matplotlib.pyplot as plt
 import igraph as ig
 import pygraphviz as pgv
 
