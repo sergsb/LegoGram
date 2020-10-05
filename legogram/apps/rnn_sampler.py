@@ -23,7 +23,6 @@ class LegoGramRNNSampler():
         for c in code:
             if c >= self.nspecs:
                 res.append(c - self.nspecs)
-        print("res is ", res)
         return self.lg.decode(res)
 
     def get_compat_rules(self, graph):  # mask only
