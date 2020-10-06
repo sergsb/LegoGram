@@ -5,7 +5,14 @@ lg.setLevel(RDLogger.CRITICAL)
 
 import numpy as np
 import igraph as ig
-import pygraphviz as pgv
+
+try:
+    import pygraphviz as pgv
+    PGV_AVAIL = True
+except:
+    PGV_AVAIL = False
+    print("`pygraphviz` package not found. Drawing of graphs is disabled")
+
 
 ###############################################################
 ### utils
@@ -62,6 +69,7 @@ def graph2mol (graph):
     return mol
 
 def draw (graph, draw=None, with_order=False, neato_seed=None):
+    if not PGV_AVAIL: raize Exception("No pygraphviz, I can draw nothing")
     def is_aromatic_nt (v):
         if v['name'] == "NT":
             return 3 in [edge(graph, v.index, n.index)['bond']
