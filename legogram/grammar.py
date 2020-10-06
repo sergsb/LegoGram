@@ -69,7 +69,7 @@ def graph2mol (graph):
     return mol
 
 def draw (graph, draw=None, with_order=False, neato_seed=None):
-    if not PGV_AVAIL: raize Exception("No pygraphviz, I can draw nothing")
+    #if not PGV_AVAIL: raize Exception("No pygraphviz, I can draw nothing")
     def is_aromatic_nt (v):
         if v['name'] == "NT":
             return 3 in [edge(graph, v.index, n.index)['bond']
