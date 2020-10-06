@@ -26,7 +26,6 @@ setuptools.setup(
           'molvs',
           'joblib',
           'pydot',
-          'pygraphviz',
           'enums'        
     ],
     python_requires='>=3.6',
