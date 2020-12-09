@@ -139,7 +139,7 @@ def draw (graph, draw=None, with_order=False, neato_seed=None):
         G.add_node(v.index,
                    shape="circle", label=vname(v),
                    fillcolor=vcolor(v), style='filled',
-                   fixedsize=True, width="0,78",
+                   fixedsize=True, width="0.78",
                    fontname="Times:style=Bold", fontsize=16)
     
     for e in graph.es():
