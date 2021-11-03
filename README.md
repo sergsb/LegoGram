@@ -45,4 +45,5 @@ model = legogram.LegoGram(smiles="legogram/data/250k_rndm_zinc_drugs_clean.smi",
 
 
 *Check source code for documentation: "legogram.py" for base interface, "apps/" for usage plugins.* 
-
+### Docs and Citation 
+This library was described in my [PhD Thesis](https://www.skoltech.ru/app/data/uploads/2020/12/thesis3.pdf) (Chapter 6). 
