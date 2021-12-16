@@ -13,20 +13,27 @@ class Rule():
      def __init__(self, rule):
          "Rule is a wrapper class for grammar graphs. Implements compare and drawing methods"
          self.graph = rule
+         self._recalculate_rule_hash()
 
      def __eq__(self, other):
          "Compare underlying graphs"
          return rule_eq(self.graph, other.graph)
 
-     def __hash__(self):
-         "Hash makes rule operations much faster"
-         return hash((self.graph.vcount(),
-                      self.graph.ecount(),
-                      tuple(self.graph.vs[0]['income']),
-                      tuple(self.graph.vs['name']),
-                      tuple(self.graph.es['bond']) if len(self.graph.es) > 0 else None))
+     def _recalculate_rule_hash(self):
+        self.cahced_hash = hash((self.graph.vcount(),
+                                 self.graph.ecount(),
+                                 tuple(self.graph.vs[0]['income']),
+                                 tuple(self.graph.vs['name']),
+                                 tuple(self.graph.es['bond']) if len(self.graph.es) > 0 else None))
 
-     def draw (self, path=None, with_order=False, neato_seed=None):
+     def __hash__(self):
+         if hasattr(self,'cahced_hash'):
+            return self.cahced_hash
+         else:
+             self._recalculate_rule_hash()
+             return self.cahced_hash
+
+     def draw (self, path=None, with_order=False, neato_seed=None,format=None):
          """
          Draw rule graph.
          If `path` is not None, use it as filepath to save png image.
@@ -34,7 +41,13 @@ class Rule():
          Set `neato_seed` to some integer - random seed for neato optimizer, if you do not like the result (overlaps are possible)
          Returns pygraphviz object.
          """
-         return draw(self.graph, path, with_order, neato_seed)
+         if not format:
+            return draw(self.graph, path, with_order, neato_seed)
+         else:
+            return draw(self.graph, path, with_order, neato_seed).draw(format=format,prog='neato')
+
+     def _repr_png_(self):
+         return draw(self.graph, None, with_order=False, neato_seed=None).draw(format='png', prog='neato')
 
 class LegoGram ():
     def __init__ (self, load=None, smiles=None, optimize=True, mpi=False, canonical=True, optimize_limit=1000):

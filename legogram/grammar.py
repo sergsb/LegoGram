@@ -68,7 +68,7 @@ def graph2mol (graph):
     mol = emol.GetMol()
     return mol
 
-def draw (graph, draw=None, with_order=False, neato_seed=None):
+def draw (graph, path=None, with_order=False, neato_seed=None):
     #if not PGV_AVAIL: raize Exception("No pygraphviz, I can draw nothing")
     def is_aromatic_nt (v):
         if v['name'] == "NT":
@@ -152,8 +152,8 @@ def draw (graph, draw=None, with_order=False, neato_seed=None):
         elif e['bond']==3:
             G.add_edge(e.source, e.target, penwidth=2, color="black:grey:black")
     
-    if draw is not None:
-        G.draw(draw, prog='neato')
+    if path is not None:
+        G.draw(path, prog='neato')
     return G
 
 ################################################################
