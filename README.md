@@ -11,14 +11,14 @@ pip install git+https://github.com/sergsb/LegoGram.git
 
 ```
 from legogram import LegoGram, pretrained
-model = LegoGram(load=pretrained.M_250k)
+model = LegoGram(load=pretrained.M_250k_kekulized_grammar)
 ```
 
 ## Encode and decode
 
 ```
 mol = 'COC(=O)Cc1csc(NC(=O)Cc2coc3cc(C)ccc23)n1'
-encoded = model.encode(mol)`
+encoded = model.encode(mol)
 model.decode(encoded) == "COC(=O)Cc1csc(NC(=O)Cc2coc3cc(C)ccc23)n1" #It's a toy example. In production compare by InChI
 >>True
 
