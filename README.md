@@ -17,9 +17,8 @@ model = LegoGram(load=pretrained.M_250k_kekulized_grammar)
 ## Encode and decode
 
 ```
-mol = 'COC(=O)Cc1csc(NC(=O)Cc2coc3cc(C)ccc23)n1'
-encoded = model.encode(mol)
-model.decode(encoded) == "COC(=O)Cc1csc(NC(=O)Cc2coc3cc(C)ccc23)n1" #It's a toy example. In production compare by InChI
+encoded = model.encode("COC(=O)CC1=CSC(NC(=O)CC2=COC3=CC(C)=CC=C23)=N1")
+model.decode(encoded) == "COC(=O)CC1=CSC(NC(=O)CC2=COC3=CC(C)=CC=C23)=N1" #It's a toy example. In production compare by InChI
 >>True
 
 ```
