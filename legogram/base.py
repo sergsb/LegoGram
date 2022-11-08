@@ -1,3 +1,12 @@
+from os import cpu_count
+import logging
+logger = logging.getLogger(__name__)
+import os
+if os.environ.get('LOGGING_LEVEL'):
+    logging.basicConfig(level=int(os.environ.get('LOGGING_LEVEL')))
+else:
+    logging.basicConfig(level=logging.CRITICAL)
+
 
 try:
     from mpi4py import MPI
@@ -50,7 +59,7 @@ class Rule():
          return draw(self.graph, None, with_order=False, neato_seed=None).draw(format='png', prog='neato')
 
 class LegoGram ():
-    def __init__ (self, load=None, smiles=None, optimize=True, mpi=False, canonical=True, optimize_limit=1000):
+    def __init__ (self, load=None, smiles=None, optimize=True, mpi=False, canonical=True, optimize_limit=1000, nworkers=-1, maxpart=1000):
         """
         LegoGram is the interface to the molecular grammar. Main methods to use are `encode` and `decode` (see below).
         Init keys:
@@ -78,7 +87,8 @@ class LegoGram ():
         self.canonical = canonical
         self.optimize_limit = optimize_limit
         self.maxpart = 1000
-        self.nworkers = 16
+        self.nworkers = nworkers if nworkers > 0 else cpu_count()
+        logger.info("Using {} workers".format(self.nworkers))
         if load is not None:
             self.__dict__.update(joblib.load(load))
         else:
